@@ -1,6 +1,8 @@
 import Form from "next/form";
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { CartLink, CartLinkView } from "@/components/cart-link";
 import { getTopLevelCategories } from "@/lib/commercetools/categories";
 import { listingHref } from "@/lib/listing-params";
 
@@ -36,6 +38,9 @@ export async function SiteHeader() {
             className="w-40 rounded-full border border-border bg-background px-4 py-1.5 text-sm sm:w-56"
           />
         </Form>
+        <Suspense fallback={<CartLinkView count={0} />}>
+          <CartLink />
+        </Suspense>
       </div>
     </header>
   );

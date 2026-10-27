@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Price } from "@/components/price";
 import type { ProductSummary } from "@/lib/types";
+import { productHref } from "@/lib/variants";
 
 interface ProductCardProps {
   product: ProductSummary;
@@ -15,7 +16,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const [image, hoverImage] = product.images;
 
   return (
-    <Link href={`/p/${product.slug}`} className="group flex flex-col gap-3">
+    <Link href={productHref(product.slug)} className="group flex flex-col gap-3">
       <div className="relative aspect-square overflow-hidden rounded-lg bg-surface">
         {image ? (
           <>

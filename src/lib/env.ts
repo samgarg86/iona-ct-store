@@ -20,4 +20,6 @@ export const env = {
   locale: process.env.STORE_LOCALE ?? "en-US",
   currency: process.env.STORE_CURRENCY ?? "USD",
   country: process.env.STORE_COUNTRY ?? "US",
+
+  isProduction: process.env.NODE_ENV === "production",
 };

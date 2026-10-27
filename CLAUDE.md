@@ -28,7 +28,9 @@ Take-home assignment for IONA Commerce. Full brief: `docs/assignment.pdf` (gitig
 - Store context: `en-US` / `USD` / `US`. The sample data has no Finland prices or `en-FI` locale, so a Finland store would need data changes (decided against for now)
 - API client has `manage_orders`, so carts can be server-side (cart ID in an httpOnly cookie). Before submitting, create a narrower client for reviewers
 - Done: PLP at `/products` (category filter, search, sort, pagination) on branch `feat/plp`
-- Next: PDP at `/p/[slug]` with add to cart, then cart page (remove item, update quantity), then polish the home page
+- Done: PDP at `/p/[slug]` (variant options via `?sku=`, gallery, add to cart, header cart count) on branch `feat/pdp`, stacked on `feat/plp`
+- Cart lives in `src/lib/commercetools/cart.ts`; cart Server Actions in `src/app/cart/actions.ts`
+- Next: cart page at `/cart` (remove item, update quantity; the header and PDP already link there), then polish the home page
 
 ## Workflow
 
