@@ -1,8 +1,8 @@
 import Form from "next/form";
 import Link from "next/link";
 
-import { MainNav } from "@/components/nav/main-nav";
-import { NavDrawerToggle, NavProvider } from "@/components/nav/nav-state";
+import { MainNav, NavDrawerButton } from "@/components/nav/main-nav";
+import { NavProvider } from "@/components/nav/nav-dropdown";
 import { getCategoryTree } from "@/lib/commercetools/categories";
 
 export async function SiteHeader() {
@@ -11,7 +11,7 @@ export async function SiteHeader() {
   return (
     <header className="relative border-b border-border bg-background">
       <NavProvider className="mx-auto flex h-16 max-w-6xl items-center gap-x-4 px-4 lg:gap-x-8">
-        <NavDrawerToggle />
+        <NavDrawerButton />
         <Link href="/" className="text-xl font-semibold tracking-tight">
           Iona
         </Link>
