@@ -4,6 +4,7 @@
 // children; these components only track which panel is open. Nothing here reads the viewport while
 // rendering, so server and client HTML always match and the layout switches purely via CSS.
 
+import Link from "next/link";
 import {
   createContext,
   use,
@@ -20,6 +21,8 @@ const HOVER_DELAY_MS = 150;
 const DESKTOP_QUERY = "(min-width: 64rem)"; // Tailwind `lg`
 
 export const NAV_ID = "main-nav";
+const DRAWER_OPEN_ID = "nav-drawer-open";
+const DRAWER_CLOSE_ID = "nav-drawer-close";
 
 interface NavState {
   openPanel: string | null;
@@ -27,6 +30,7 @@ interface NavState {
   togglePanel: (id: string) => void;
   showPanel: (id: string) => void;
   toggleDrawer: () => void;
+  closeAll: () => void;
   hoverPanel: (id: string | null) => void;
 }
 
@@ -104,10 +108,36 @@ export function NavProvider({ className, children }: NavProviderProps) {
     };
   }, [anythingOpen, openPanel, closeAll]);
 
+  // While the mobile drawer is open: lock page scroll, move focus into the drawer, and close it if
+  // the window grows to desktop width (where the drawer doesn't exist). The drawer only delays
+  // `visibility` when closing, so it is already focusable here.
+  useEffect(() => {
+    if (!drawerOpen) return;
+
+    const root = document.documentElement;
+    const previousOverflow = root.style.overflow;
+    root.style.overflow = "hidden";
+    document.getElementById(DRAWER_CLOSE_ID)?.focus();
+
+    const desktop = window.matchMedia(DESKTOP_QUERY);
+    const onChange = () => {
+      if (desktop.matches) closeAll();
+    };
+    desktop.addEventListener("change", onChange);
+
+    return () => {
+      root.style.overflow = previousOverflow;
+      desktop.removeEventListener("change", onChange);
+      if (document.getElementById(NAV_ID)?.contains(document.activeElement)) {
+        document.getElementById(DRAWER_OPEN_ID)?.focus();
+      }
+    };
+  }, [drawerOpen, closeAll]);
+
   useEffect(() => () => clearTimeout(hoverTimer.current), []);
 
   return (
-    <NavContext value={{ openPanel, drawerOpen, togglePanel, showPanel, toggleDrawer, hoverPanel }}>
+    <NavContext value={{ openPanel, drawerOpen, togglePanel, showPanel, toggleDrawer, closeAll, hoverPanel }}>
       <div
         ref={rootRef}
         className={className}
@@ -122,6 +152,8 @@ export function NavProvider({ className, children }: NavProviderProps) {
   );
 }
 
+const iconButtonClass = "rounded-md p-2 hover:bg-surface lg:hidden";
+
 /** Hamburger button; hidden on desktop, where the nav is always visible. */
 export function NavDrawerToggle() {
   const { drawerOpen, toggleDrawer } = useNav();
@@ -129,18 +161,15 @@ export function NavDrawerToggle() {
   return (
     <button
       type="button"
+      id={DRAWER_OPEN_ID}
       aria-controls={NAV_ID}
       aria-expanded={drawerOpen}
       onClick={toggleDrawer}
-      className="-ml-2 rounded-md p-2 hover:bg-surface lg:hidden"
+      className={`-ml-2 ${iconButtonClass}`}
     >
-      <span className="sr-only">{drawerOpen ? "Close menu" : "Open menu"}</span>
+      <span className="sr-only">Open menu</span>
       <svg aria-hidden viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={1.5}>
-        {drawerOpen ? (
-          <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
-        ) : (
-          <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
-        )}
+        <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
       </svg>
     </button>
   );
@@ -151,19 +180,49 @@ interface NavMenuProps {
   children: ReactNode;
 }
 
-/** The single nav element: a drawer below the header on mobile, an inline row on desktop. */
+/**
+ * The single nav element: an off-canvas drawer over the page on mobile, an inline row in the
+ * header on desktop. The `lg:` classes undo every drawer style, so both share one markup.
+ * Desktop needs `translate-none` (not `translate-x-0`): any translate makes the nav the containing
+ * block, and the mega menu panels must position against the full-width header instead.
+ */
 export function NavMenu({ label, children }: NavMenuProps) {
-  const { drawerOpen } = useNav();
+  const { drawerOpen, toggleDrawer, closeAll } = useNav();
+  const open = drawerOpen || undefined;
 
   return (
-    <nav
-      id={NAV_ID}
-      aria-label={label}
-      data-open={drawerOpen || undefined}
-      className="order-last mt-2 hidden w-full data-open:block lg:order-none lg:mt-0 lg:block lg:w-auto lg:self-stretch"
-    >
-      {children}
-    </nav>
+    <>
+      <div
+        aria-hidden
+        data-open={open}
+        onClick={closeAll}
+        className="invisible fixed inset-0 z-40 bg-foreground/40 opacity-0 transition-[opacity,visibility] data-open:visible data-open:opacity-100 motion-reduce:transition-none lg:hidden"
+      />
+      <nav
+        id={NAV_ID}
+        aria-label={label}
+        data-open={open}
+        className="invisible fixed inset-y-0 left-0 z-50 w-[85%] max-w-sm -translate-x-full overflow-y-auto bg-background px-4 pb-8 shadow-xl transition-[translate,visibility] duration-200 data-open:visible data-open:transition-[translate] data-open:translate-x-0 motion-reduce:transition-none lg:visible lg:static lg:z-auto lg:w-auto lg:max-w-none lg:translate-none lg:self-stretch lg:overflow-visible lg:bg-transparent lg:px-0 lg:pb-0 lg:shadow-none lg:transition-none"
+      >
+        <div className="flex h-16 items-center justify-between border-b border-border lg:hidden">
+          <Link href="/" className="text-xl font-semibold tracking-tight">
+            Iona
+          </Link>
+          <button
+            type="button"
+            id={DRAWER_CLOSE_ID}
+            onClick={toggleDrawer}
+            className={`-mr-2 ${iconButtonClass}`}
+          >
+            <span className="sr-only">Close menu</span>
+            <svg aria-hidden viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        {children}
+      </nav>
+    </>
   );
 }
 

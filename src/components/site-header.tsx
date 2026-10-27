@@ -10,7 +10,7 @@ export async function SiteHeader() {
 
   return (
     <header className="relative border-b border-border bg-background">
-      <NavProvider className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 px-4 py-3 lg:h-16 lg:gap-x-8 lg:py-0">
+      <NavProvider className="mx-auto flex h-16 max-w-6xl items-center gap-x-4 px-4 lg:gap-x-8">
         <NavDrawerToggle />
         <Link href="/" className="text-xl font-semibold tracking-tight">
           Iona
