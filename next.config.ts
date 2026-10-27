@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  images: {
+    // commercetools sample data images
+    remotePatterns: [new URL("https://storage.googleapis.com/**")],
+  },
   turbopack: {
     rules: {
       "*.css": {
