@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import { Price } from "@/components/price";
 import { AddToCartForm } from "@/components/pdp/add-to-cart-form";
@@ -76,10 +76,11 @@ function ProductDetails({ product, variant }: { product: Product; variant: Produ
   const purchasable = variant.inStock && variant.price !== undefined;
 
   return (
-    <div className="grid gap-8 md:grid-cols-2 md:gap-12">
+    <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:grid-cols-[7fr_5fr]">
       <ProductGallery key={variant.sku} images={variant.images} />
 
-      <div className="flex flex-col gap-6">
+      {/* On desktop the info column stays in view while the stacked gallery scrolls past */}
+      <div className="flex flex-col gap-6 md:sticky md:top-8 md:self-start">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
           <Price price={variant.price} locale={env.locale} className="text-xl" />
@@ -92,23 +93,22 @@ function ProductDetails({ product, variant }: { product: Product; variant: Produ
 
         <AddToCartForm sku={variant.sku} purchasable={purchasable} />
 
-        {product.description && (
-          <section className="flex flex-col gap-2 border-t border-border pt-6">
-            <h2 className="text-sm font-medium">Description</h2>
-            <p className="text-sm leading-relaxed text-muted">{product.description}</p>
-          </section>
-        )}
-
-        {product.details.length > 0 && (
-          <section className="flex flex-col gap-2 border-t border-border pt-6">
-            <h2 className="text-sm font-medium">Details</h2>
-            <ul className="list-disc pl-5 text-sm leading-relaxed text-muted">
-              {product.details.map((detail) => (
-                <li key={detail}>{detail}</li>
-              ))}
-            </ul>
-          </section>
-        )}
+        <div className="flex flex-col border-b border-border">
+          {product.description && (
+            <InfoSection title="Description" open>
+              <p>{product.description}</p>
+            </InfoSection>
+          )}
+          {product.details.length > 0 && (
+            <InfoSection title="Details">
+              <ul className="list-disc pl-5">
+                {product.details.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            </InfoSection>
+          )}
+        </div>
 
         <p className="text-xs text-muted">SKU {variant.sku}</p>
       </div>
@@ -116,11 +116,25 @@ function ProductDetails({ product, variant }: { product: Product; variant: Produ
   );
 }
 
+function InfoSection({ title, open, children }: { title: string; open?: boolean; children: ReactNode }) {
+  return (
+    <details open={open} className="group border-t border-border">
+      <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
+        {title}
+        <span aria-hidden className="text-lg leading-none text-muted transition-transform group-open:rotate-45">
+          +
+        </span>
+      </summary>
+      <div className="pb-5 text-sm leading-relaxed text-muted">{children}</div>
+    </details>
+  );
+}
+
 function ProductSkeleton() {
   return (
     <div aria-hidden className="flex animate-pulse flex-col gap-6">
       <div className="h-5 w-64 rounded bg-surface" />
-      <div className="grid gap-8 md:grid-cols-2 md:gap-12">
+      <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:grid-cols-[7fr_5fr]">
         <div className="aspect-square rounded-lg bg-surface" />
         <div className="flex flex-col gap-3">
           <div className="h-9 w-3/4 rounded bg-surface" />

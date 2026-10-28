@@ -29,3 +29,30 @@ body {
 html:has(#main-nav:popover-open) {
   overflow: hidden;
 }
+
+/*
+ * PDP gallery parallax: each image drifts slightly against its tile as the tile scrolls
+ * through the viewport. Uses CSS scroll-driven animations, so there is no JS scroll work;
+ * browsers without support and users who prefer reduced motion get static images.
+ */
+@keyframes gallery-drift {
+  from {
+    transform: translateY(-5%) scale(1.04);
+  }
+  to {
+    transform: translateY(5%) scale(1.04);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Track the tile's position, not the moving image, so the transform can't affect its own timeline */
+    .gallery-tile {
+      view-timeline: --gallery-tile;
+    }
+    .gallery-drift {
+      animation: gallery-drift linear both;
+      animation-timeline: --gallery-tile;
+    }
+  }
+}
