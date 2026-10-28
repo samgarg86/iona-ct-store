@@ -82,7 +82,7 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
           <li
             key={image.url}
             data-gallery-tile
-            className="relative aspect-square w-full shrink-0 snap-center overflow-hidden bg-surface md:rounded-lg"
+            className="relative aspect-square w-full shrink-0 snap-center overflow-hidden md:rounded-lg"
           >
             {/* Sample images vary in aspect ratio: fit them whole and blend white backgrounds into the tile */}
             <Image
@@ -92,7 +92,7 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : undefined}
               sizes="(min-width: 1024px) 58vw, (min-width: 768px) 50vw, 100vw"
-              className="object-contain px-0 pt-8 pb-4 mix-blend-multiply md:p-6 lg:p-10"
+              className="object-contain px-0 pt-8 pb-4 mix-blend-multiply md:py-6 lg:py-10"
             />
           </li>
         ))}
