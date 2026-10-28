@@ -34,6 +34,11 @@ export interface Category {
   parentId?: string;
 }
 
+/** A category with its descendants, in catalog (orderHint) order */
+export interface CategoryNode extends Category {
+  children: CategoryNode[];
+}
+
 export const SORT_OPTIONS = {
   featured: "Featured",
   "price-asc": "Price: low to high",

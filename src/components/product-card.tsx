@@ -14,6 +14,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const [image, hoverImage] = product.images;
+  // Sample images vary in aspect ratio, so fit them whole into the square tile. Multiply blending
+  // lets their white backgrounds take on the tile color instead of showing as white bands.
+  const imageClass = "object-contain p-4 mix-blend-multiply transition-opacity duration-300";
 
   return (
     <Link href={productHref(product.slug)} className="group flex flex-col gap-3">
@@ -26,7 +29,8 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
               priority={priority}
-              className="object-cover transition-opacity duration-300 group-hover:opacity-90"
+              // Hide fully on hover: a contained hover image may not cover it
+              className={`${imageClass} ${hoverImage ? "group-hover:opacity-0" : "group-hover:opacity-90"}`}
             />
             {hoverImage && (
               <Image
@@ -34,7 +38,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
                 alt=""
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                className="object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                className={`${imageClass} opacity-0 group-hover:opacity-100`}
               />
             )}
           </>
