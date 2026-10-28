@@ -92,7 +92,7 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : undefined}
               sizes="(min-width: 1024px) 58vw, (min-width: 768px) 50vw, 100vw"
-              className="object-contain p-6 mix-blend-multiply lg:p-10"
+              className="object-contain px-0 pt-8 pb-4 mix-blend-multiply md:p-6 lg:p-10"
             />
           </li>
         ))}
