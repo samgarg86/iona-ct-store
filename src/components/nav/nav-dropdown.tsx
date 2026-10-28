@@ -5,6 +5,7 @@
 // state here is the open panel. Nothing reads the viewport while rendering, so server and client
 // HTML always match and the layout switches purely via CSS.
 
+import { ChevronDown } from "lucide-react";
 import {
   createContext,
   use,
@@ -141,16 +142,10 @@ export function NavDropdown({ id, label, children }: NavDropdownProps) {
         className="flex w-full items-center justify-between gap-1 py-3 font-medium lg:w-auto lg:border-b-2 lg:border-transparent lg:py-0 lg:aria-expanded:border-foreground"
       >
         {label}
-        <svg
-          aria-hidden
-          viewBox="0 0 20 20"
+        <ChevronDown
           className={`size-4 text-muted transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
           strokeWidth={1.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 8l5 5 5-5" />
-        </svg>
+        />
       </button>
       <div
         id={panelId(id)}
