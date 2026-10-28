@@ -38,4 +38,4 @@ Take-home assignment for IONA Commerce. Full brief: `docs/assignment.pdf` (gitig
 - Never commit or push. For a new feature, create the branch and make the code changes, then stop; the user reviews the diff and commits/pushes themselves
 - When the user asks a question or leaves a decision open (e.g. "which library should we use?"), answer it and wait for their decision before writing code that depends on it
 - Don't add design-rationale notes to the README unless asked
-- Dev server: `npm run dev` on port 3000
+- Dev server: `yarn dev` on port 3000
