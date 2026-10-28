@@ -28,7 +28,8 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
               alt={image.alt}
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-              priority={priority}
+              loading={priority ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : undefined}
               // Hide fully on hover: a contained hover image may not cover it
               className={`${imageClass} ${hoverImage ? "group-hover:opacity-0" : "group-hover:opacity-90"}`}
             />

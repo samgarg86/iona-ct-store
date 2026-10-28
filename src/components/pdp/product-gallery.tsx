@@ -1,16 +1,68 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef } from "react";
 
+import { breakpointQueries, gsap, useGSAP } from "@/lib/gsap";
 import type { ProductImage } from "@/lib/types";
 
-// Sample images vary in aspect ratio, so fit them whole into the tile and multiply-blend their
-// white backgrounds into the tile color (same treatment as the PLP cards)
-const imageClass = "object-contain p-6 mix-blend-multiply lg:p-10";
-
-/** Mobile: one large image with thumbnails. Desktop: all images stacked, next to sticky product info. */
+/**
+ * One list of images, laid out per breakpoint: a full-bleed swipeable strip with a position line on
+ * mobile, and a vertical stack with a subtle scroll parallax on desktop (next to the sticky product info).
+ */
 export function ProductGallery({ images }: { images: ProductImage[] }) {
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLUListElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (!galleryRef.current) return;
+
+      // Same breakpoint as the md: classes that switch between the strip and the stack
+      const md = breakpointQueries("md");
+      gsap.matchMedia().add(
+        {
+          desktop: md.above,
+          mobile: md.below,
+          motionOk: "(prefers-reduced-motion: no-preference)",
+        },
+        ({ conditions }) => {
+          if (conditions?.desktop && conditions.motionOk) {
+            for (const tile of gsap.utils.toArray<HTMLElement>("[data-gallery-tile]", galleryRef.current)) {
+              gsap.fromTo(
+                tile.querySelector("img"),
+                { yPercent: -5 },
+                {
+                  yPercent: 5,
+                  ease: "none",
+                  scrollTrigger: { trigger: tile, start: "top bottom", end: "bottom top", scrub: true },
+                },
+              );
+            }
+          }
+
+          if (conditions?.mobile && images.length > 1) {
+            // The line is 1/n wide, so moving it (n - 1) widths spans the strip's whole scroll range
+            gsap.to(indicatorRef.current, {
+              xPercent: (images.length - 1) * 100,
+              ease: "none",
+              scrollTrigger: {
+                scroller: trackRef.current,
+                horizontal: true,
+                start: 0,
+                end: "max",
+                // Glide slightly behind the finger, unless the user prefers reduced motion
+                scrub: conditions.motionOk ? 0.3 : true,
+              },
+            });
+          }
+        },
+      );
+    },
+    { scope: galleryRef },
+  );
+
   if (images.length === 0) {
     return (
       <div className="flex aspect-square items-center justify-center rounded-lg bg-surface text-sm text-muted">
@@ -20,73 +72,40 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
   }
 
   return (
-    <>
-      <div className="md:hidden">
-        <ThumbnailGallery images={images} />
-      </div>
-      <StackedGallery images={images} />
-    </>
-  );
-}
-
-function ThumbnailGallery({ images }: { images: ProductImage[] }) {
-  const [index, setIndex] = useState(0);
-  const image = images[index] ?? images[0];
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-surface">
-        <Image src={image.url} alt={image.alt} fill priority sizes="100vw" className={imageClass} />
-      </div>
-
-      {images.length > 1 && (
-        <ul className="flex gap-3" aria-label="Product images">
-          {images.map((thumbnail, thumbnailIndex) => (
-            <li key={thumbnail.url}>
-              <button
-                type="button"
-                onClick={() => setIndex(thumbnailIndex)}
-                aria-label={`Show image ${thumbnailIndex + 1} of ${images.length}`}
-                aria-current={thumbnailIndex === index ? "true" : undefined}
-                className={`relative block size-20 overflow-hidden rounded-md border-2 bg-surface transition-colors ${
-                  thumbnailIndex === index ? "border-foreground" : "border-transparent hover:border-border"
-                }`}
-              >
-                <Image
-                  src={thumbnail.url}
-                  alt=""
-                  fill
-                  sizes="80px"
-                  className="object-contain p-1.5 mix-blend-multiply"
-                />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function StackedGallery({ images }: { images: ProductImage[] }) {
-  return (
-    <ul className="hidden flex-col gap-4 md:flex" aria-label="Product images">
-      {images.map((image, index) => (
-        <li key={image.url} className="gallery-tile relative aspect-square overflow-hidden rounded-lg bg-surface">
-          {/* The drift wrapper moves slightly as the tile scrolls through the viewport. Its animation
-              creates a stacking context, so it needs its own background for the image to blend into. */}
-          <div className="gallery-drift absolute inset-0 bg-surface">
+    <div ref={galleryRef} className="relative -mx-4 md:mx-0">
+      <ul
+        ref={trackRef}
+        aria-label="Product images"
+        className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] md:flex-col md:gap-4 md:overflow-visible [&::-webkit-scrollbar]:hidden"
+      >
+        {images.map((image, index) => (
+          <li
+            key={image.url}
+            data-gallery-tile
+            className="relative aspect-square w-full shrink-0 snap-center overflow-hidden bg-surface md:rounded-lg"
+          >
+            {/* Sample images vary in aspect ratio: fit them whole and blend white backgrounds into the tile */}
             <Image
               src={image.url}
               alt={image.alt}
               fill
-              priority={index === 0}
-              sizes="(min-width: 1024px) 58vw, 50vw"
-              className={imageClass}
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : undefined}
+              sizes="(min-width: 1024px) 58vw, (min-width: 768px) 50vw, 100vw"
+              className="object-contain p-6 mix-blend-multiply lg:p-10"
             />
-          </div>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
+
+      {images.length > 1 && (
+        <div
+          ref={indicatorRef}
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 left-0 h-[2px] bg-foreground md:hidden"
+          style={{ width: `${100 / images.length}%` }}
+        />
+      )}
+    </div>
   );
 }
