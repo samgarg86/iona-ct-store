@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Prom
 
 export default function ProductPage({ params, searchParams }: PageProps<"/p/[slug]">) {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-8 md:pt-8">
       <Suspense fallback={<ProductSkeleton />}>
         <ProductContent params={params} searchParams={searchParams} />
       </Suspense>
@@ -48,40 +48,51 @@ async function ProductContent({ params, searchParams }: PageProps<"/p/[slug]">) 
   const [product, categories] = await Promise.all([getProductBySlug(slug), getCategories()]);
   if (!product) notFound();
 
-  return (
-    <>
-      <Breadcrumbs trail={categoryTrail(product, categories)} productName={product.name} />
+  const breadcrumbs = <Breadcrumbs trail={categoryTrail(product, categories)} productName={product.name} />;
 
-      {/* The static shell shows the master variant; the variant from ?sku= streams in */}
-      <Suspense fallback={<ProductDetails product={product} variant={product.variants[0]} />}>
-        <SelectedVariantDetails product={product} searchParams={searchParams} />
-      </Suspense>
-    </>
+  return (
+    // The static shell shows the master variant; the variant from ?sku= streams in
+    <Suspense fallback={<ProductDetails product={product} variant={product.variants[0]} breadcrumbs={breadcrumbs} />}>
+      <SelectedVariantDetails product={product} searchParams={searchParams} breadcrumbs={breadcrumbs} />
+    </Suspense>
   );
 }
 
 async function SelectedVariantDetails({
   product,
   searchParams,
+  breadcrumbs,
 }: {
   product: Product;
   searchParams: PageProps<"/p/[slug]">["searchParams"];
+  breadcrumbs: ReactNode;
 }) {
   const { sku } = await searchParams;
   const variant = selectVariant(product, typeof sku === "string" ? sku : undefined);
-  return <ProductDetails product={product} variant={variant} />;
+  return <ProductDetails product={product} variant={variant} breadcrumbs={breadcrumbs} />;
 }
 
-function ProductDetails({ product, variant }: { product: Product; variant: ProductVariant }) {
+interface ProductDetailsProps {
+  product: Product;
+  variant: ProductVariant;
+  breadcrumbs: ReactNode;
+}
+
+function ProductDetails({ product, variant, breadcrumbs }: ProductDetailsProps) {
   const purchasable = variant.inStock && variant.price !== undefined;
 
   return (
-    <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:grid-cols-[7fr_5fr]">
+    <div className="relative grid gap-8 md:grid-cols-2 md:gap-12 lg:grid-cols-[7fr_5fr]">
       <ProductGallery key={variant.sku} images={variant.images} />
 
       {/* On desktop the info column stays in view while the stacked gallery scrolls past */}
       <div className="flex flex-col gap-6 md:sticky md:top-8 md:self-start">
         <div className="flex flex-col gap-2">
+          {/* Mobile: overlaid on the top of the gallery (positioned against the grid), letting swipes
+              through except on the links. Desktop: above the name. */}
+          <div className="pointer-events-none absolute inset-x-0 top-3 z-10 md:pointer-events-auto md:static md:mb-2 [&_a]:pointer-events-auto">
+            {breadcrumbs}
+          </div>
           <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
           <Price price={variant.price} locale={env.locale} className="text-xl" />
           <p className={`text-sm ${variant.inStock ? "text-muted" : "text-accent"}`}>
@@ -132,11 +143,11 @@ function InfoSection({ title, open, children }: { title: string; open?: boolean;
 
 function ProductSkeleton() {
   return (
-    <div aria-hidden className="flex animate-pulse flex-col gap-6">
-      <div className="h-5 w-64 rounded bg-surface" />
+    <div aria-hidden className="animate-pulse">
       <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:grid-cols-[7fr_5fr]">
-        <div className="aspect-square rounded-lg bg-surface" />
+        <div className="-mx-4 aspect-square bg-surface md:mx-0 md:rounded-lg" />
         <div className="flex flex-col gap-3">
+          <div className="mb-2 hidden h-4 w-64 rounded bg-surface md:block" />
           <div className="h-9 w-3/4 rounded bg-surface" />
           <div className="h-7 w-24 rounded bg-surface" />
           <div className="mt-6 h-11 w-full rounded-full bg-surface" />
@@ -149,28 +160,36 @@ function ProductSkeleton() {
 function Breadcrumbs({ trail, productName }: { trail: Category[]; productName: string }) {
   return (
     <nav aria-label="Breadcrumb">
-      <ol className="flex flex-wrap items-center gap-2 text-sm text-muted">
+      <ol className="flex flex-wrap items-center gap-0.5 text-xs text-muted">
         <li>
           <Link href="/products" className="hover:text-foreground hover:underline">
             Shop
           </Link>
         </li>
         {trail.map((category) => (
-          <li key={category.id} className="flex items-center gap-2">
-            <span aria-hidden>/</span>
+          <li key={category.id} className="flex items-center gap-0.5">
+            <BreadcrumbSeparator />
             <Link href={listingHref({ category: category.slug })} className="hover:text-foreground hover:underline">
               {category.name}
             </Link>
           </li>
         ))}
-        <li className="flex items-center gap-2">
-          <span aria-hidden>/</span>
+        <li className="flex items-center gap-0.5">
+          <BreadcrumbSeparator />
           <span aria-current="page" className="text-foreground">
             {productName}
           </span>
         </li>
       </ol>
     </nav>
+  );
+}
+
+function BreadcrumbSeparator() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="size-3" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 5l5 5-5 5" />
+    </svg>
   );
 }
 
