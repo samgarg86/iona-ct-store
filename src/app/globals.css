@@ -30,7 +30,7 @@ body {
   color: var(--foreground);
 }
 
-/* Keep the page from scrolling behind the open mobile nav drawer */
-html:has(#main-nav:popover-open) {
+/* Keep the page from scrolling behind the open mobile nav drawer or search bar */
+html:has(#main-nav:popover-open, #mobile-search:popover-open) {
   overflow: hidden;
 }

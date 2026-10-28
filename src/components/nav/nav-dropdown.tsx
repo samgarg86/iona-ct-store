@@ -100,6 +100,11 @@ export function NavProvider({ className, children }: NavProviderProps) {
           setOpenPanel(null);
           link.closest<HTMLElement>("[popover]")?.hidePopover();
         }}
+        onSubmit={(event) => {
+          // The header persists across client navigations, so a search submitted from the mobile
+          // search bar has to close it explicitly
+          if (event.target instanceof Element) event.target.closest<HTMLElement>("[popover]")?.hidePopover();
+        }}
       >
         {children}
       </div>

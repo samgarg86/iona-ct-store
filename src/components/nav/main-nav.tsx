@@ -1,6 +1,7 @@
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
+import { iconButtonClass } from "@/components/icon-button";
 import { NavDropdown } from "@/components/nav/nav-dropdown";
 import { listingHref } from "@/lib/listing-params";
 import type { CategoryNode } from "@/lib/types";
@@ -13,12 +14,10 @@ const CONTENT_LINKS = [{ label: "About", href: "/about" }];
 const topLinkClass =
   "block py-3 font-medium lg:flex lg:items-center lg:border-b-2 lg:border-transparent lg:py-0 lg:hover:border-foreground";
 
-const iconButtonClass = "rounded-md p-2 hover:bg-surface lg:hidden";
-
 /** Opens the mobile drawer; the browser handles the popover's open state, Escape and backdrop. */
 export function NavDrawerButton() {
   return (
-    <button type="button" popoverTarget={MAIN_NAV_ID} className={`-ml-2 ${iconButtonClass}`}>
+    <button type="button" popoverTarget={MAIN_NAV_ID} className={`-ml-2.5 ${iconButtonClass} lg:hidden`}>
       <span className="sr-only">Open menu</span>
       <Menu className="size-6" strokeWidth={1.5} />
     </button>
@@ -56,7 +55,7 @@ export function MainNav({ categories }: MainNavProps) {
         aria-label="Main"
         className="relative h-full w-[85%] max-w-sm -translate-x-full overflow-y-auto bg-background px-4 pb-8 shadow-xl transition-[translate] duration-200 group-open:translate-x-0 starting:group-open:-translate-x-full motion-reduce:transition-none lg:static lg:h-auto lg:w-auto lg:max-w-none lg:translate-none lg:self-stretch lg:overflow-visible lg:bg-transparent lg:px-0 lg:pb-0 lg:shadow-none lg:transition-none"
       >
-        <div className="flex h-16 items-center justify-between border-b border-border lg:hidden">
+        <div className="flex h-14 items-center justify-between border-b border-border lg:hidden">
           <Link href="/" className="text-xl font-semibold tracking-tight">
             Iona
           </Link>
@@ -64,7 +63,7 @@ export function MainNav({ categories }: MainNavProps) {
             type="button"
             popoverTarget={MAIN_NAV_ID}
             popoverTargetAction="hide"
-            className={`-mr-2 ${iconButtonClass}`}
+            className={`-mr-2.5 ${iconButtonClass}`}
           >
             <span className="sr-only">Close menu</span>
             <X className="size-6" strokeWidth={1.5} />

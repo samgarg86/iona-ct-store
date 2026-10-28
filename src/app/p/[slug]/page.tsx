@@ -87,7 +87,7 @@ function ProductDetails({ product, variant, breadcrumbs }: ProductDetailsProps) 
       <ProductGallery key={variant.sku} images={variant.images} />
 
       {/* On desktop the info column stays in view while the stacked gallery scrolls past */}
-      <div className="flex flex-col gap-6 md:sticky md:top-24 md:self-start">
+      <div className="flex flex-col gap-6 md:sticky md:top-22 lg:top-24 md:self-start">
         <div className="flex flex-col gap-2">
           {/* Mobile: overlaid on the top of the gallery (positioned against the grid), letting swipes
               through except on the links. Desktop: above the name. */}
