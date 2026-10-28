@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, type CSSProperties } from "react";
 
 import { breakpointQueries, gsap, useGSAP } from "@/lib/gsap";
 import type { ProductImage } from "@/lib/types";
 
 /**
  * One list of images, laid out per breakpoint: a full-bleed swipeable strip with a position line on
- * mobile, and a vertical stack with a subtle scroll parallax on desktop (next to the sticky product info).
+ * mobile, and a vertical stack of images at their own shape on desktop (next to the sticky product info).
  */
 export function ProductGallery({ images }: { images: ProductImage[] }) {
   const galleryRef = useRef<HTMLDivElement>(null);
@@ -23,25 +23,10 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
       const md = breakpointQueries("md");
       gsap.matchMedia().add(
         {
-          desktop: md.above,
           mobile: md.below,
           motionOk: "(prefers-reduced-motion: no-preference)",
         },
         ({ conditions }) => {
-          if (conditions?.desktop && conditions.motionOk) {
-            for (const tile of gsap.utils.toArray<HTMLElement>("[data-gallery-tile]", galleryRef.current)) {
-              gsap.fromTo(
-                tile.querySelector("img"),
-                { yPercent: -5 },
-                {
-                  yPercent: 5,
-                  ease: "none",
-                  scrollTrigger: { trigger: tile, start: "top bottom", end: "bottom top", scrub: true },
-                },
-              );
-            }
-          }
-
           if (conditions?.mobile && images.length > 1) {
             // The line is 1/n wide, so moving it (n - 1) widths spans the strip's whole scroll range
             gsap.to(indicatorRef.current, {
@@ -81,10 +66,11 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
         {images.map((image, index) => (
           <li
             key={image.url}
-            data-gallery-tile
-            className="relative aspect-square w-full shrink-0 snap-center overflow-hidden bg-surface md:rounded-lg"
+            // Mobile: square tiles so the strip keeps one height. Desktop: each image at its own shape.
+            style={{ "--image-ratio": `${image.width ?? 1} / ${image.height ?? 1}` } as CSSProperties}
+            className="relative aspect-square w-full shrink-0 snap-center overflow-hidden bg-surface md:aspect-(--image-ratio) md:bg-transparent"
           >
-            {/* Sample images vary in aspect ratio: fit them whole and blend white backgrounds into the tile */}
+            {/* Fit images whole; multiply blends white backgrounds into the tile (mobile) or page (desktop) */}
             <Image
               src={image.url}
               alt={image.alt}
@@ -92,7 +78,7 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : undefined}
               sizes="(min-width: 1024px) 58vw, (min-width: 768px) 50vw, 100vw"
-              className="object-contain px-0 pt-8 pb-4 mix-blend-multiply md:p-6 lg:p-10"
+              className="object-contain px-0 pt-8 pb-4 mix-blend-multiply md:p-0"
             />
           </li>
         ))}
