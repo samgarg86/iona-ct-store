@@ -1,29 +1,21 @@
 import Form from "next/form";
 import Link from "next/link";
 
-import { getTopLevelCategories } from "@/lib/commercetools/categories";
-import { listingHref } from "@/lib/listing-params";
+import { MainNav, NavDrawerButton } from "@/components/nav/main-nav";
+import { NavProvider } from "@/components/nav/nav-dropdown";
+import { getCategoryTree } from "@/lib/commercetools/categories";
 
 export async function SiteHeader() {
-  const categories = await getTopLevelCategories();
+  const categories = await getCategoryTree();
 
   return (
-    <header className="border-b border-border bg-background">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-4 py-4">
+    <header className="relative border-b border-border bg-background">
+      <NavProvider className="mx-auto flex h-16 max-w-6xl items-center gap-x-4 px-4 lg:gap-x-8">
+        <NavDrawerButton />
         <Link href="/" className="text-xl font-semibold tracking-tight">
           Iona
         </Link>
-        <nav aria-label="Main" className="order-last w-full sm:order-none sm:w-auto">
-          <ul className="flex gap-5 text-sm">
-            {categories.map((category) => (
-              <li key={category.id}>
-                <Link href={listingHref({ category: category.slug })} className="hover:underline">
-                  {category.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <MainNav categories={categories} />
         <Form action="/products" role="search" className="ml-auto">
           <label htmlFor="site-search" className="sr-only">
             Search products
@@ -36,7 +28,7 @@ export async function SiteHeader() {
             className="w-40 rounded-full border border-border bg-background px-4 py-1.5 text-sm sm:w-56"
           />
         </Form>
-      </div>
+      </NavProvider>
     </header>
   );
 }
