@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -168,28 +169,20 @@ function Breadcrumbs({ trail, productName }: { trail: Category[]; productName: s
         </li>
         {trail.map((category) => (
           <li key={category.id} className="flex items-center gap-0.5">
-            <BreadcrumbSeparator />
+            <ChevronRight className="size-3" strokeWidth={1.5} />
             <Link href={listingHref({ category: category.slug })} className="hover:text-foreground hover:underline">
               {category.name}
             </Link>
           </li>
         ))}
         <li className="flex items-center gap-0.5">
-          <BreadcrumbSeparator />
+          <ChevronRight className="size-3" strokeWidth={1.5} />
           <span aria-current="page" className="text-foreground">
             {productName}
           </span>
         </li>
       </ol>
     </nav>
-  );
-}
-
-function BreadcrumbSeparator() {
-  return (
-    <svg aria-hidden viewBox="0 0 20 20" className="size-3" fill="none" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 5l5 5-5 5" />
-    </svg>
   );
 }
 

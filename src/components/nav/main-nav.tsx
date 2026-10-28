@@ -1,3 +1,4 @@
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
 import { NavDropdown } from "@/components/nav/nav-dropdown";
@@ -19,9 +20,7 @@ export function NavDrawerButton() {
   return (
     <button type="button" popoverTarget={MAIN_NAV_ID} className={`-ml-2 ${iconButtonClass}`}>
       <span className="sr-only">Open menu</span>
-      <svg aria-hidden viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
-      </svg>
+      <Menu className="size-6" strokeWidth={1.5} />
     </button>
   );
 }
@@ -68,9 +67,7 @@ export function MainNav({ categories }: MainNavProps) {
             className={`-mr-2 ${iconButtonClass}`}
           >
             <span className="sr-only">Close menu</span>
-            <svg aria-hidden viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            <X className="size-6" strokeWidth={1.5} />
           </button>
         </div>
         <ul className="text-sm lg:flex lg:h-full lg:gap-6">

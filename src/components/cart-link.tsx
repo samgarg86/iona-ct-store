@@ -1,3 +1,4 @@
+import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 import { getCart } from "@/lib/commercetools/cart";
@@ -13,11 +14,11 @@ export function CartLinkView({ count }: { count: number }) {
     <Link
       href="/cart"
       aria-label={count > 0 ? `Cart, ${count} ${count === 1 ? "item" : "items"}` : "Cart"}
-      className="flex items-center gap-1.5 text-sm hover:underline"
+      className="relative -mr-2 rounded-md p-2 hover:bg-surface"
     >
-      Cart
+      <ShoppingBag className="size-6" strokeWidth={1.5} />
       {count > 0 && (
-        <span className="min-w-5 rounded-full bg-foreground px-1.5 text-center text-xs leading-5 text-background">
+        <span className="absolute top-0.5 right-0.5 min-w-4.5 rounded-full bg-foreground px-1 text-center text-[0.6875rem] leading-4.5 font-medium text-background">
           {count}
         </span>
       )}
