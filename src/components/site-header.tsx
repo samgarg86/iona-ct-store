@@ -1,6 +1,8 @@
 import Form from "next/form";
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { CartLink, CartLinkView } from "@/components/cart-link";
 import { MainNav, NavDrawerButton } from "@/components/nav/main-nav";
 import { NavProvider } from "@/components/nav/nav-dropdown";
 import { getCategoryTree } from "@/lib/commercetools/categories";
@@ -28,6 +30,9 @@ export async function SiteHeader() {
             className="w-40 rounded-full border border-border bg-background px-4 py-1.5 text-sm sm:w-56"
           />
         </Form>
+        <Suspense fallback={<CartLinkView count={0} />}>
+          <CartLink />
+        </Suspense>
       </NavProvider>
     </header>
   );

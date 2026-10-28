@@ -4,9 +4,9 @@ import type { _SearchQuery, SearchSorting } from "@commercetools/platform-sdk";
 import { cacheLife } from "next/cache";
 
 import { apiRoot } from "@/lib/commercetools/client";
-import { toProductSummary } from "@/lib/commercetools/mappers";
+import { toProduct, toProductSummary } from "@/lib/commercetools/mappers";
 import { env } from "@/lib/env";
-import type { ProductListQuery, ProductListResult, SortOption } from "@/lib/types";
+import type { Product, ProductListQuery, ProductListResult, SortOption } from "@/lib/types";
 
 export const PAGE_SIZE = 24;
 
@@ -46,6 +46,12 @@ function buildSort(sort: SortOption): SearchSorting[] | undefined {
   }
 }
 
+const projectionParameters = {
+  priceCurrency: env.currency,
+  priceCountry: env.country,
+  localeProjection: [env.locale],
+};
+
 export async function searchProducts(query: ProductListQuery): Promise<ProductListResult> {
   "use cache";
   cacheLife("minutes");
@@ -59,11 +65,7 @@ export async function searchProducts(query: ProductListQuery): Promise<ProductLi
         sort: buildSort(query.sort),
         limit: PAGE_SIZE,
         offset: (query.page - 1) * PAGE_SIZE,
-        productProjectionParameters: {
-          priceCurrency: env.currency,
-          priceCountry: env.country,
-          localeProjection: [env.locale],
-        },
+        productProjectionParameters: projectionParameters,
       },
     })
     .execute();
@@ -77,4 +79,24 @@ export async function searchProducts(query: ProductListQuery): Promise<ProductLi
     page: query.page,
     pageCount: Math.ceil(body.total / PAGE_SIZE),
   };
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  "use cache";
+  cacheLife("minutes");
+
+  const { body } = await apiRoot
+    .products()
+    .search()
+    .post({
+      body: {
+        query: { exact: { field: "slug", language: env.locale, value: slug } },
+        limit: 1,
+        productProjectionParameters: projectionParameters,
+      },
+    })
+    .execute();
+
+  const projection = body.results[0]?.productProjection;
+  return projection ? toProduct(projection, env.locale) : undefined;
 }

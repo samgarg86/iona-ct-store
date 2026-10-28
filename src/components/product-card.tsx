@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Price } from "@/components/price";
 import type { ProductSummary } from "@/lib/types";
+import { productHref } from "@/lib/variants";
 
 interface ProductCardProps {
   product: ProductSummary;
@@ -18,7 +19,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const imageClass = "object-contain p-4 mix-blend-multiply transition-opacity duration-300";
 
   return (
-    <Link href={`/p/${product.slug}`} className="group flex flex-col gap-3">
+    <Link href={productHref(product.slug)} className="group flex flex-col gap-3">
       <div className="relative aspect-square overflow-hidden rounded-lg bg-surface">
         {image ? (
           <>
@@ -27,7 +28,8 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
               alt={image.alt}
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-              priority={priority}
+              loading={priority ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : undefined}
               // Hide fully on hover: a contained hover image may not cover it
               className={`${imageClass} ${hoverImage ? "group-hover:opacity-0" : "group-hover:opacity-90"}`}
             />

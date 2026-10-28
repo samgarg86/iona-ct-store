@@ -20,6 +20,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Always emitted (even if unused in CSS) so client code can read breakpoints, see breakpointQueries() */
+@theme static {
+  --breakpoint-md: 48rem;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

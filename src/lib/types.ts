@@ -61,3 +61,61 @@ export interface ProductListResult {
   page: number;
   pageCount: number;
 }
+
+/** A selectable variant dimension, e.g. color or size, with the values offered across variants */
+export interface ProductOption {
+  name: string;
+  label: string;
+  values: ProductOptionValue[];
+}
+
+export interface ProductOptionValue {
+  value: string;
+  /** CSS color for swatch-style options */
+  swatch?: string;
+}
+
+export interface ProductVariant {
+  id: number;
+  sku: string;
+  images: ProductImage[];
+  price?: Price;
+  inStock: boolean;
+  /** Option name to value, e.g. { color: "Plum", size: "Queen" } */
+  options: Record<string, string>;
+}
+
+export interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  /** Short spec bullet points */
+  details: string[];
+  categoryIds: string[];
+  /** The master variant comes first */
+  variants: ProductVariant[];
+  /** Only options whose value differs between variants */
+  options: ProductOption[];
+}
+
+/** Largest quantity a shopper can pick for one line item */
+export const MAX_QUANTITY = 10;
+
+export interface CartLineItem {
+  id: string;
+  productSlug: string;
+  name: string;
+  sku: string;
+  image?: ProductImage;
+  quantity: number;
+  price: Price;
+  total: Money;
+}
+
+export interface Cart {
+  id: string;
+  lineItems: CartLineItem[];
+  totalQuantity: number;
+  total: Money;
+}
