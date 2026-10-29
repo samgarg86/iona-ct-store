@@ -1,10 +1,11 @@
-import { ChevronDown } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { iconButtonClass } from "@/components/icon-button";
 import { ProductCard } from "@/components/product-card";
 import { CategoryPills } from "@/components/plp/category-pills";
 import { ActiveFilters, FacetFilters } from "@/components/plp/facet-filters";
@@ -23,13 +24,15 @@ import {
 } from "@/lib/listing-params";
 import { SORT_OPTIONS, type SortOption } from "@/lib/types";
 
+const FILTERS_ID = "filters";
+
 export const metadata: Metadata = {
   title: "Shop",
 };
 
 export default function ProductsPage({ searchParams }: PageProps<"/products">) {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-6">
       <Suspense fallback={<ListingSkeleton />}>
         <ProductListing searchParams={searchParams} />
       </Suspense>
@@ -60,14 +63,7 @@ async function ProductListing({ searchParams }: Pick<PageProps<"/products">, "se
     Object.keys(SORT_OPTIONS).map((sort) => [sort, listingHref({ ...params, sort: sort as SortOption, page: 1 })]),
   ) as Record<SortOption, string>;
   const selectedCount = Object.values(params.filters).flat().length;
-
-  // Rendered in the desktop sidebar and the mobile disclosure
-  const filterPanel = (
-    <div className="flex flex-col gap-6">
-      <SortOptions value={params.sort} hrefs={sortHrefs} />
-      <FacetFilters facets={result.facets} params={params} />
-    </div>
-  );
+  const itemCount = `${result.total} ${result.total === 1 ? "item" : "items"}`;
 
   return (
     <>
@@ -77,25 +73,72 @@ async function ProductListing({ searchParams }: Pick<PageProps<"/products">, "se
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[13rem_1fr]">
-        <aside aria-label="Filters" className="hidden lg:block">
-          {filterPanel}
-        </aside>
+        {/*
+          Same pattern as the main nav: below `lg` a bottom sheet in a full-screen popover, from `lg`
+          up `display: contents` so the panel is the sidebar column. Each filter tap navigates, but the
+          popover's open state lives in the browser, so the sheet stays open and its count updates live.
+        */}
+        <div
+          id={FILTERS_ID}
+          popover="auto"
+          className="group fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 bg-transparent p-0 text-foreground transition-[display,overlay] transition-discrete duration-200 motion-reduce:transition-none lg:contents"
+        >
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden
+            popoverTarget={FILTERS_ID}
+            popoverTargetAction="hide"
+            className="absolute inset-0 bg-foreground/40 opacity-0 transition-opacity duration-200 group-open:opacity-100 starting:group-open:opacity-0 motion-reduce:transition-none lg:hidden"
+          />
+          <aside
+            aria-label="Filters"
+            className="absolute inset-x-0 bottom-0 flex max-h-[85dvh] translate-y-full flex-col rounded-t-2xl bg-background shadow-xl transition-[translate] duration-200 group-open:translate-y-0 starting:group-open:translate-y-full motion-reduce:transition-none lg:static lg:max-h-none lg:translate-none lg:rounded-none lg:bg-transparent lg:shadow-none lg:transition-none"
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-2 lg:hidden">
+              <h2 className="font-medium">Filter &amp; sort</h2>
+              <button
+                type="button"
+                popoverTarget={FILTERS_ID}
+                popoverTargetAction="hide"
+                className={`-mr-2.5 ${iconButtonClass}`}
+              >
+                <span className="sr-only">Close filters</span>
+                <X className="size-6" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-6 overflow-y-auto p-4 lg:overflow-visible lg:p-0">
+              <SortOptions value={params.sort} hrefs={sortHrefs} />
+              <FacetFilters facets={result.facets} params={params} />
+            </div>
+            <div className="border-t border-border p-4 lg:hidden">
+              <button
+                type="button"
+                popoverTarget={FILTERS_ID}
+                popoverTargetAction="hide"
+                className="w-full rounded-full bg-foreground py-3 text-sm font-medium text-background"
+              >
+                Show {itemCount}
+              </button>
+            </div>
+          </aside>
+        </div>
 
         {/* min-w-0 lets the pill row scroll instead of widening the grid column */}
         <div className="flex min-w-0 flex-col gap-6">
-          <details className="group rounded-lg border border-border lg:hidden">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium">
-              Filter &amp; sort{selectedCount > 0 && ` (${selectedCount})`}
-              <ChevronDown className="size-4 transition-transform group-open:rotate-180" strokeWidth={1.5} />
-            </summary>
-            <div className="border-t border-border p-4">{filterPanel}</div>
-          </details>
-
-          <div className="flex items-center justify-end gap-4 border-b border-border pb-4">
+          <div className="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:gap-4">
             <CategoryPills categories={browseCategories} params={params} />
-            <p className="shrink-0 text-sm text-muted">
-              {result.total} {result.total === 1 ? "item" : "items"}
-            </p>
+            <div className="flex shrink-0 items-center justify-between gap-4 lg:ml-auto">
+              <p className="text-sm text-muted">{itemCount}</p>
+              <button
+                type="button"
+                popoverTarget={FILTERS_ID}
+                className="flex items-center gap-1.5 text-sm font-medium lg:hidden"
+              >
+                <SlidersHorizontal className="size-4" strokeWidth={1.5} />
+                Filter &amp; sort{selectedCount > 0 && ` (${selectedCount})`}
+              </button>
+            </div>
           </div>
 
           <ActiveFilters facets={result.facets} params={params} />

@@ -30,7 +30,7 @@ body {
   color: var(--foreground);
 }
 
-/* Keep the page from scrolling behind the open mobile nav drawer */
-html:has(#main-nav:popover-open) {
+/* Keep the page from scrolling behind the open mobile nav drawer and filter sheet */
+html:has(#main-nav:popover-open, #filters:popover-open) {
   overflow: hidden;
 }
