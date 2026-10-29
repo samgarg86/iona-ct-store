@@ -51,7 +51,7 @@ export type SortOption = keyof typeof SORT_OPTIONS;
 /** PLP filters in display order. The keys double as URL params, e.g. ?color=white&color=gray */
 export const FACETS = {
   color: "Color",
-  finish: "Finish",
+  finish: "Material finish",
   price: "Price",
 } as const;
 
