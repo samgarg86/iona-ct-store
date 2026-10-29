@@ -1,6 +1,6 @@
-export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
+export function ProductGridSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div aria-hidden className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+    <div aria-hidden className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="flex animate-pulse flex-col gap-3">
           <div className="aspect-square rounded-lg bg-surface" />

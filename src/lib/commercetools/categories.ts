@@ -19,9 +19,17 @@ export async function getCategories(): Promise<Category[]> {
   return body.results.map((category) => toCategory(category, env.locale));
 }
 
-export async function getTopLevelCategories(): Promise<Category[]> {
+/** Ancestors-first path ending at the given category, e.g. [Furniture, Sofas]. */
+export async function getCategoryTrail(categoryId: string | undefined): Promise<Category[]> {
   const categories = await getCategories();
-  return categories.filter((category) => !category.parentId);
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const trail: Category[] = [];
+  let current = categoryId ? byId.get(categoryId) : undefined;
+  while (current && trail.length < 5) {
+    trail.unshift(current);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  return trail;
 }
 
 /** Nests the flat category list; getCategories' orderHint sort carries over to each level. */

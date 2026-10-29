@@ -7,21 +7,26 @@ import type {
   LocalizedString,
   Price as CtPrice,
   ProductProjection,
+  ProductSearchFacetResult,
+  ProductSearchFacetResultBucket,
   ProductVariant as CtProductVariant,
   TypedMoney,
 } from "@commercetools/platform-sdk";
 
-import type {
-  Cart,
-  CartLineItem,
-  Category,
-  Money,
-  Price,
-  Product,
-  ProductImage,
-  ProductOption,
-  ProductSummary,
-  ProductVariant,
+import {
+  FACETS,
+  type Cart,
+  type CartLineItem,
+  type Category,
+  type Facet,
+  type FacetName,
+  type Money,
+  type Price,
+  type Product,
+  type ProductImage,
+  type ProductOption,
+  type ProductSummary,
+  type ProductVariant,
 } from "@/lib/types";
 
 /** Picks the requested locale, falling back to any available translation. */
@@ -65,6 +70,24 @@ export function toProductSummary(product: ProductProjection, locale: string): Pr
     name,
     images: (variant.images ?? []).map((image) => toImage(image, name)),
     price: toPrice(variant.price),
+  };
+}
+
+/** Maps a distinct or ranges facet result, keeping only values that match products or are selected. */
+export function toFacet(
+  results: ProductSearchFacetResult[],
+  name: FacetName,
+  selected: string[] = [],
+  labelFor: (key: string) => string,
+): Facet {
+  const result = results.find((candidate) => candidate.name === name);
+  const buckets = result && "buckets" in result ? (result as ProductSearchFacetResultBucket).buckets : [];
+  return {
+    name,
+    label: FACETS[name],
+    values: buckets
+      .map(({ key, count }) => ({ value: key, label: labelFor(key), count, selected: selected.includes(key) }))
+      .filter((value) => value.count > 0 || value.selected),
   };
 }
 
