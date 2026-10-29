@@ -1,8 +1,9 @@
 import "server-only";
 
-import type { Cart as CtCart } from "@commercetools/platform-sdk";
+import type { Cart as CtCart, CartUpdateAction } from "@commercetools/platform-sdk";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { cache } from "react";
 
 import { apiRoot } from "@/lib/commercetools/client";
 import { toCart } from "@/lib/commercetools/mappers";
@@ -46,23 +47,39 @@ async function createCart(): Promise<CtCart> {
   return body;
 }
 
-export async function getCart(): Promise<Cart | undefined> {
+/**
+ * The shopper's cart for display. Memoized per request so the header and page share one fetch;
+ * updates read the cart uncached so they always send its latest version.
+ */
+export const getCart = cache(async (): Promise<Cart | undefined> => {
   const cart = await getActiveCart();
   return cart ? toCart(cart, env.locale) : undefined;
-}
+});
 
 export async function addToCart(sku: string, quantity: number): Promise<Cart> {
   const cart = (await getActiveCart()) ?? (await createCart());
+  return updateCart(cart, [{ action: "addLineItem", sku, quantity }]);
+}
 
+/** Sets a line item's quantity. Returns undefined when the shopper has no active cart. */
+export async function changeLineItemQuantity(lineItemId: string, quantity: number): Promise<Cart | undefined> {
+  const cart = await getActiveCart();
+  if (!cart) return undefined;
+  return updateCart(cart, [{ action: "changeLineItemQuantity", lineItemId, quantity }]);
+}
+
+/** Removes a line item. Returns undefined when the shopper has no active cart. */
+export async function removeLineItem(lineItemId: string): Promise<Cart | undefined> {
+  const cart = await getActiveCart();
+  if (!cart) return undefined;
+  return updateCart(cart, [{ action: "removeLineItem", lineItemId }]);
+}
+
+async function updateCart(cart: CtCart, actions: CartUpdateAction[]): Promise<Cart> {
   const { body } = await apiRoot
     .carts()
     .withId({ ID: cart.id })
-    .post({
-      body: {
-        version: cart.version,
-        actions: [{ action: "addLineItem", sku, quantity }],
-      },
-    })
+    .post({ body: { version: cart.version, actions } })
     .execute();
 
   return toCart(body, env.locale);
