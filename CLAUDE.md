@@ -30,7 +30,8 @@ Take-home assignment for IONA Commerce. Full brief: `docs/assignment.pdf` (gitig
 - Done: PLP at `/products` (category filter, search, sort, pagination) on branch `feat/plp`
 - Done: PDP at `/p/[slug]` (variant options via `?sku=`, gallery, add to cart, header cart count) on branch `feat/pdp`, stacked on `feat/plp`
 - Cart lives in `src/lib/commercetools/cart.ts`; cart Server Actions in `src/app/cart/actions.ts`
-- Next: cart page at `/cart` (remove item, update quantity; the header and PDP already link there), then polish the home page
+- Done: cart page at `/cart` (update quantity, remove item, optimistic UI via `useOptimistic`) on branch `feat/cart`. No minicart by design
+- Next: polish the home page
 
 ## Workflow
 
