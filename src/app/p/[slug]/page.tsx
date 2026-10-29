@@ -1,18 +1,16 @@
-import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Price } from "@/components/price";
 import { AddToCartForm } from "@/components/pdp/add-to-cart-form";
 import { ProductGallery } from "@/components/pdp/product-gallery";
 import { VariantPicker } from "@/components/pdp/variant-picker";
-import { getCategories } from "@/lib/commercetools/categories";
+import { getCategoryTrail } from "@/lib/commercetools/categories";
 import { getProductBySlug, searchProducts } from "@/lib/commercetools/products";
 import { env } from "@/lib/env";
-import { listingHref } from "@/lib/listing-params";
-import type { Category, Product, ProductVariant } from "@/lib/types";
+import type { Product, ProductVariant } from "@/lib/types";
 import { selectVariant } from "@/lib/variants";
 
 /** Prerender the first page of the catalog; other products render on first request. */
@@ -46,10 +44,11 @@ export default function ProductPage({ params, searchParams }: PageProps<"/p/[slu
 
 async function ProductContent({ params, searchParams }: PageProps<"/p/[slug]">) {
   const { slug } = await params;
-  const [product, categories] = await Promise.all([getProductBySlug(slug), getCategories()]);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const breadcrumbs = <Breadcrumbs trail={categoryTrail(product, categories)} productName={product.name} />;
+  const trail = await getCategoryTrail(product.categoryIds[0]);
+  const breadcrumbs = <Breadcrumbs trail={trail} current={product.name} />;
 
   return (
     // The static shell shows the master variant; the variant from ?sku= streams in
@@ -156,46 +155,6 @@ function ProductSkeleton() {
       </div>
     </div>
   );
-}
-
-function Breadcrumbs({ trail, productName }: { trail: Category[]; productName: string }) {
-  return (
-    <nav aria-label="Breadcrumb">
-      <ol className="flex flex-wrap items-center gap-0.5 text-xs text-muted">
-        <li>
-          <Link href="/products" className="hover:text-foreground hover:underline">
-            Shop
-          </Link>
-        </li>
-        {trail.map((category) => (
-          <li key={category.id} className="flex items-center gap-0.5">
-            <ChevronRight className="size-3" strokeWidth={1.5} />
-            <Link href={listingHref({ category: category.slug })} className="hover:text-foreground hover:underline">
-              {category.name}
-            </Link>
-          </li>
-        ))}
-        <li className="flex items-center gap-0.5">
-          <ChevronRight className="size-3" strokeWidth={1.5} />
-          <span aria-current="page" className="text-foreground">
-            {productName}
-          </span>
-        </li>
-      </ol>
-    </nav>
-  );
-}
-
-/** Ancestors-first path to the product's first category, e.g. [Furniture, Sofas]. */
-function categoryTrail(product: Product, categories: Category[]): Category[] {
-  const byId = new Map(categories.map((category) => [category.id, category]));
-  const trail: Category[] = [];
-  let current = product.categoryIds.map((id) => byId.get(id)).find(Boolean);
-  while (current && trail.length < 5) {
-    trail.unshift(current);
-    current = current.parentId ? byId.get(current.parentId) : undefined;
-  }
-  return trail;
 }
 
 function truncate(text: string, length: number): string {

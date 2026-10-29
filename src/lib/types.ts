@@ -48,15 +48,43 @@ export const SORT_OPTIONS = {
 
 export type SortOption = keyof typeof SORT_OPTIONS;
 
+/** PLP filters in display order. The keys double as URL params, e.g. ?color=white&color=gray */
+export const FACETS = {
+  color: "Color",
+  finish: "Material finish",
+  price: "Price",
+} as const;
+
+export type FacetName = keyof typeof FACETS;
+
+/** Selected values per facet; values within a facet are ORed, facets are ANDed */
+export type FacetSelection = Partial<Record<FacetName, string[]>>;
+
+export interface Facet {
+  name: FacetName;
+  label: string;
+  values: FacetValue[];
+}
+
+export interface FacetValue {
+  value: string;
+  label: string;
+  /** Products matching this value within the current category and search, ignoring other filters */
+  count: number;
+  selected: boolean;
+}
+
 export interface ProductListQuery {
   categoryId?: string;
   text?: string;
+  filters?: FacetSelection;
   sort: SortOption;
   page: number;
 }
 
 export interface ProductListResult {
   products: ProductSummary[];
+  facets: Facet[];
   total: number;
   page: number;
   pageCount: number;

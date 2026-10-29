@@ -1,18 +1,30 @@
+import { SlidersHorizontal, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { iconButtonClass } from "@/components/icon-button";
 import { ProductCard } from "@/components/product-card";
-import { CategoryNav } from "@/components/plp/category-nav";
+import { CategoryPills } from "@/components/plp/category-pills";
+import { ActiveFilters, FacetFilters } from "@/components/plp/facet-filters";
 import { Pagination } from "@/components/plp/pagination";
 import { ProductGridSkeleton } from "@/components/plp/product-grid-skeleton";
-import { SortSelect } from "@/components/plp/sort-select";
-import { getCategoryBySlug, getTopLevelCategories } from "@/lib/commercetools/categories";
+import { SortOptions } from "@/components/plp/sort-options";
+import { getBrowseCategories, getCategoryBySlug, getCategoryTrail } from "@/lib/commercetools/categories";
 import { searchProducts } from "@/lib/commercetools/products";
 import { env } from "@/lib/env";
-import { listingHref, parseListingParams, type ListingParams } from "@/lib/listing-params";
+import {
+  clearFiltersHref,
+  hasFilters,
+  listingHref,
+  parseListingParams,
+  type ListingParams,
+} from "@/lib/listing-params";
 import { SORT_OPTIONS, type SortOption } from "@/lib/types";
+
+const FILTERS_ID = "filters";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -20,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function ProductsPage({ searchParams }: PageProps<"/products">) {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-6">
       <Suspense fallback={<ListingSkeleton />}>
         <ProductListing searchParams={searchParams} />
       </Suspense>
@@ -31,55 +43,125 @@ export default function ProductsPage({ searchParams }: PageProps<"/products">) {
 async function ProductListing({ searchParams }: Pick<PageProps<"/products">, "searchParams">) {
   const params = parseListingParams(await searchParams);
 
-  const [categories, category] = await Promise.all([
-    getTopLevelCategories(),
-    params.category ? getCategoryBySlug(params.category) : undefined,
-  ]);
+  const category = params.category ? await getCategoryBySlug(params.category) : undefined;
   if (params.category && !category) notFound();
 
-  const result = await searchProducts({
-    categoryId: category?.id,
-    text: params.q,
-    sort: params.sort,
-    page: params.page,
-  });
+  const [trail, browseCategories, result] = await Promise.all([
+    getCategoryTrail(category?.id),
+    getBrowseCategories(category),
+    searchProducts({
+      categoryId: category?.id,
+      text: params.q,
+      filters: params.filters,
+      sort: params.sort,
+      page: params.page,
+    }),
+  ]);
 
   const title = params.q ? `Results for “${params.q}”` : (category?.name ?? "All products");
   const sortHrefs = Object.fromEntries(
     Object.keys(SORT_OPTIONS).map((sort) => [sort, listingHref({ ...params, sort: sort as SortOption, page: 1 })]),
   ) as Record<SortOption, string>;
+  const selectedCount = Object.values(params.filters).flat().length;
+  const itemCount = `${result.total} ${result.total === 1 ? "item" : "items"}`;
 
   return (
     <>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        {category && <Breadcrumbs trail={trail.slice(0, -1)} current={category.name} />}
         <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-        <CategoryNav categories={categories} activeSlug={category?.slug} />
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-b border-border pb-4">
-        <p className="text-sm text-muted">
-          {result.total} {result.total === 1 ? "product" : "products"}
-        </p>
-        <SortSelect value={params.sort} hrefs={sortHrefs} />
+      <div className="grid gap-8 lg:grid-cols-[13rem_1fr]">
+        {/*
+          Same pattern as the main nav: below `lg` a bottom sheet in a full-screen popover, from `lg`
+          up `display: contents` so the panel is the sidebar column. Each filter tap navigates, but the
+          popover's open state lives in the browser, so the sheet stays open and its count updates live.
+        */}
+        <div
+          id={FILTERS_ID}
+          popover="auto"
+          className="group fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 bg-transparent p-0 text-foreground transition-[display,overlay] transition-discrete duration-200 motion-reduce:transition-none lg:contents"
+        >
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden
+            popoverTarget={FILTERS_ID}
+            popoverTargetAction="hide"
+            className="absolute inset-0 bg-foreground/40 opacity-0 transition-opacity duration-200 group-open:opacity-100 starting:group-open:opacity-0 motion-reduce:transition-none lg:hidden"
+          />
+          <aside
+            aria-label="Filters"
+            className="absolute inset-x-0 bottom-0 flex max-h-[85dvh] translate-y-full flex-col rounded-t-2xl bg-background shadow-xl transition-[translate] duration-200 group-open:translate-y-0 starting:group-open:translate-y-full motion-reduce:transition-none lg:static lg:max-h-none lg:translate-none lg:rounded-none lg:bg-transparent lg:shadow-none lg:transition-none"
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-2 lg:hidden">
+              <h2 className="font-medium">Filter &amp; sort</h2>
+              <button
+                type="button"
+                popoverTarget={FILTERS_ID}
+                popoverTargetAction="hide"
+                className={`-mr-2.5 ${iconButtonClass}`}
+              >
+                <span className="sr-only">Close filters</span>
+                <X className="size-6" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-6 overflow-y-auto p-4 lg:overflow-visible lg:p-0">
+              <SortOptions value={params.sort} hrefs={sortHrefs} />
+              <FacetFilters facets={result.facets} params={params} />
+            </div>
+            <div className="border-t border-border p-4 lg:hidden">
+              <button
+                type="button"
+                popoverTarget={FILTERS_ID}
+                popoverTargetAction="hide"
+                className="w-full rounded-full bg-foreground py-3 text-sm font-medium text-background"
+              >
+                Show {itemCount}
+              </button>
+            </div>
+          </aside>
+        </div>
+
+        {/* min-w-0 lets the pill row scroll instead of widening the grid column */}
+        <div className="flex min-w-0 flex-col gap-6">
+          <div className="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:gap-4">
+            <CategoryPills categories={browseCategories} params={params} />
+            <div className="flex shrink-0 items-center justify-between gap-4 lg:ml-auto">
+              <p className="text-sm text-muted">{itemCount}</p>
+              <button
+                type="button"
+                popoverTarget={FILTERS_ID}
+                className="flex items-center gap-1.5 text-sm font-medium lg:hidden"
+              >
+                <SlidersHorizontal className="size-4" strokeWidth={1.5} />
+                Filter &amp; sort{selectedCount > 0 && ` (${selectedCount})`}
+              </button>
+            </div>
+          </div>
+
+          <ActiveFilters facets={result.facets} params={params} />
+
+          {result.products.length > 0 ? (
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
+              {result.products.map((product, index) => (
+                <li key={product.id}>
+                  <ProductCard product={product} locale={env.locale} priority={index < 3} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState params={params} />
+          )}
+
+          <Pagination
+            page={result.page}
+            pageCount={result.pageCount}
+            hrefForPage={(page) => listingHref({ ...params, page })}
+          />
+        </div>
       </div>
-
-      {result.products.length > 0 ? (
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-          {result.products.map((product, index) => (
-            <li key={product.id}>
-              <ProductCard product={product} locale={env.locale} priority={index < 4} />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <EmptyState params={params} />
-      )}
-
-      <Pagination
-        page={result.page}
-        pageCount={result.pageCount}
-        hrefForPage={(page) => listingHref({ ...params, page })}
-      />
     </>
   );
 }
@@ -88,12 +170,23 @@ function EmptyState({ params }: { params: ListingParams }) {
   return (
     <div className="flex flex-col items-center gap-3 py-16 text-center">
       <p className="text-lg">No products found.</p>
-      <p className="text-sm text-muted">
-        {params.q ? "Try a different search term or browse a category." : "Try another category."}
-      </p>
-      <Link href="/products" className="text-sm font-medium underline">
-        View all products
-      </Link>
+      {hasFilters(params) ? (
+        <>
+          <p className="text-sm text-muted">No products match all of these filters.</p>
+          <Link href={clearFiltersHref(params)} className="text-sm font-medium underline">
+            Clear filters
+          </Link>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-muted">
+            {params.q ? "Try a different search term or browse a category." : "Try another category."}
+          </p>
+          <Link href="/products" className="text-sm font-medium underline">
+            View all products
+          </Link>
+        </>
+      )}
     </div>
   );
 }
@@ -101,12 +194,14 @@ function EmptyState({ params }: { params: ListingParams }) {
 function ListingSkeleton() {
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <div className="h-9 w-56 animate-pulse rounded bg-surface" />
-        <div className="h-8 w-full max-w-md animate-pulse rounded-full bg-surface" />
+      <div className="h-9 w-56 animate-pulse rounded bg-surface" />
+      <div className="grid gap-8 lg:grid-cols-[13rem_1fr]">
+        <div className="hidden h-96 animate-pulse rounded-lg bg-surface lg:block" />
+        <div className="flex flex-col gap-6">
+          <div className="h-px bg-border" />
+          <ProductGridSkeleton />
+        </div>
       </div>
-      <div className="h-px bg-border" />
-      <ProductGridSkeleton />
     </>
   );
 }
