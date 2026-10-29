@@ -6,11 +6,12 @@ import { Suspense } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ProductCard } from "@/components/product-card";
+import { CategoryPills } from "@/components/plp/category-pills";
 import { ActiveFilters, FacetFilters } from "@/components/plp/facet-filters";
 import { Pagination } from "@/components/plp/pagination";
 import { ProductGridSkeleton } from "@/components/plp/product-grid-skeleton";
-import { SortSelect } from "@/components/plp/sort-select";
-import { getCategoryBySlug, getCategoryTrail } from "@/lib/commercetools/categories";
+import { SortOptions } from "@/components/plp/sort-options";
+import { getBrowseCategories, getCategoryBySlug, getCategoryTrail } from "@/lib/commercetools/categories";
 import { searchProducts } from "@/lib/commercetools/products";
 import { env } from "@/lib/env";
 import {
@@ -42,8 +43,9 @@ async function ProductListing({ searchParams }: Pick<PageProps<"/products">, "se
   const category = params.category ? await getCategoryBySlug(params.category) : undefined;
   if (params.category && !category) notFound();
 
-  const [trail, result] = await Promise.all([
+  const [trail, browseCategories, result] = await Promise.all([
     getCategoryTrail(category?.id),
+    getBrowseCategories(category),
     searchProducts({
       categoryId: category?.id,
       text: params.q,
@@ -59,6 +61,14 @@ async function ProductListing({ searchParams }: Pick<PageProps<"/products">, "se
   ) as Record<SortOption, string>;
   const selectedCount = Object.values(params.filters).flat().length;
 
+  // Rendered in the desktop sidebar and the mobile disclosure
+  const filterPanel = (
+    <div className="flex flex-col gap-6">
+      <SortOptions value={params.sort} hrefs={sortHrefs} />
+      <FacetFilters facets={result.facets} params={params} />
+    </div>
+  );
+
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -68,25 +78,24 @@ async function ProductListing({ searchParams }: Pick<PageProps<"/products">, "se
 
       <div className="grid gap-8 lg:grid-cols-[13rem_1fr]">
         <aside aria-label="Filters" className="hidden lg:block">
-          <FacetFilters facets={result.facets} params={params} />
+          {filterPanel}
         </aside>
 
-        <div className="flex flex-col gap-6">
+        {/* min-w-0 lets the pill row scroll instead of widening the grid column */}
+        <div className="flex min-w-0 flex-col gap-6">
           <details className="group rounded-lg border border-border lg:hidden">
             <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium">
-              Filters{selectedCount > 0 && ` (${selectedCount})`}
+              Filter &amp; sort{selectedCount > 0 && ` (${selectedCount})`}
               <ChevronDown className="size-4 transition-transform group-open:rotate-180" strokeWidth={1.5} />
             </summary>
-            <div className="border-t border-border p-4">
-              <FacetFilters facets={result.facets} params={params} />
-            </div>
+            <div className="border-t border-border p-4">{filterPanel}</div>
           </details>
 
-          <div className="flex items-center justify-between gap-4 border-b border-border pb-4">
-            <p className="text-sm text-muted">
-              {result.total} {result.total === 1 ? "product" : "products"}
+          <div className="flex items-center justify-end gap-4 border-b border-border pb-4">
+            <CategoryPills categories={browseCategories} params={params} />
+            <p className="shrink-0 text-sm text-muted">
+              {result.total} {result.total === 1 ? "item" : "items"}
             </p>
-            <SortSelect value={params.sort} hrefs={sortHrefs} />
           </div>
 
           <ActiveFilters facets={result.facets} params={params} />
