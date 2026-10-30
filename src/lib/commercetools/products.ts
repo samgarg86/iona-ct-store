@@ -1,6 +1,11 @@
 import "server-only";
 
-import type { _ProductSearchFacetExpression, _SearchQuery, SearchSorting } from "@commercetools/platform-sdk";
+import type {
+  _ProductSearchFacetExpression,
+  _SearchQuery,
+  ProductSearchResult,
+  SearchSorting,
+} from "@commercetools/platform-sdk";
 import { cacheLife } from "next/cache";
 
 import { apiRoot } from "@/lib/commercetools/client";
@@ -13,6 +18,7 @@ import {
   type Product,
   type ProductListQuery,
   type ProductListResult,
+  type ProductSummary,
   type SortOption,
 } from "@/lib/types";
 
@@ -147,10 +153,7 @@ export async function searchProducts(query: ProductListQuery): Promise<ProductLi
     .execute();
 
   return {
-    products: body.results
-      .map((result) => result.productProjection)
-      .filter((projection) => projection !== undefined)
-      .map((projection) => toProductSummary(projection, env.locale)),
+    products: toSummaries(body.results),
     facets: (Object.keys(FACETS) as FacetName[]).map((name) =>
       toFacet(body.facets, name, query.filters?.[name], valueLabels[name]),
     ),
@@ -158,6 +161,33 @@ export async function searchProducts(query: ProductListQuery): Promise<ProductLi
     page: query.page,
     pageCount: Math.ceil(body.total / PAGE_SIZE),
   };
+}
+
+/** A category's first products in catalog order, for merchandising blocks such as home page rails */
+export async function getCategoryProducts(categoryId: string, limit: number): Promise<ProductSummary[]> {
+  "use cache";
+  cacheLife("minutes");
+
+  const { body } = await apiRoot
+    .products()
+    .search()
+    .post({
+      body: {
+        query: { exact: { field: "categoriesSubTree", value: categoryId } },
+        limit,
+        productProjectionParameters: projectionParameters,
+      },
+    })
+    .execute();
+
+  return toSummaries(body.results);
+}
+
+function toSummaries(results: ProductSearchResult[]): ProductSummary[] {
+  return results
+    .map((result) => result.productProjection)
+    .filter((projection) => projection !== undefined)
+    .map((projection) => toProductSummary(projection, env.locale));
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
