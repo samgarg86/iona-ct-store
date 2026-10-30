@@ -19,7 +19,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const imageClass = "object-contain p-4 mix-blend-multiply transition-opacity duration-300";
 
   return (
-    <Link href={productHref(product.slug)} className="group flex flex-col gap-3">
+    <Link href={productHref(product.slug)} prefetch className="group flex flex-col gap-3">
       <div className="relative aspect-square overflow-hidden rounded-lg bg-surface">
         {image ? (
           <>
