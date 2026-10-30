@@ -91,7 +91,8 @@ export function ProductGallery({ images }: { images: ProductImage[] }) {
               fill
               loading={index === 0 ? "eager" : "lazy"}
               fetchPriority={index === 0 ? "high" : undefined}
-              sizes="(min-width: 1024px) 58vw, (min-width: 768px) 50vw, 100vw"
+              // The page stops growing at max-w-6xl (1152px), so from there the column is a fixed ~630px
+              sizes="(min-width: 1152px) 640px, (min-width: 1024px) 58vw, (min-width: 768px) 50vw, 100vw"
               className="object-contain px-0 pt-8 pb-4 mix-blend-multiply md:py-6 lg:py-10"
             />
           </li>
