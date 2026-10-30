@@ -25,6 +25,7 @@ Take-home assignment for IONA Commerce. Full brief: `docs/assignment.pdf` (gitig
 
 ## Project state
 
+- Deployed to Vercel: https://ionashop.vercel.app/
 - Store context: `en-US` / `USD` / `US`. The sample data has no Finland prices or `en-FI` locale, so a Finland store would need data changes (decided against for now)
 - API client has `manage_orders`, so carts can be server-side (cart ID in an httpOnly cookie). Before submitting, create a narrower client for reviewers
 - Done: PLP at `/products` (category filter, search, sort, pagination) on branch `feat/plp`
