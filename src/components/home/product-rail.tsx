@@ -7,7 +7,7 @@ import { getCategoryProducts } from "@/lib/commercetools/products";
 import { env } from "@/lib/env";
 import { listingHref } from "@/lib/listing-params";
 
-/** A row of products that scrolls sideways, snapping to cards */
+/** A short grid of products from one category, linking on to the full listing */
 export async function ProductRail({ title, categorySlug, limit }: ProductRailBlock) {
   const category = await getCategoryBySlug(categorySlug);
   const products = category ? await getCategoryProducts(category.id, limit) : [];
@@ -21,10 +21,10 @@ export async function ProductRail({ title, categorySlug, limit }: ProductRailBlo
           View all
         </Link>
       </div>
-      {/* Negative margins let cards scroll to the screen edge while lining up with the page gutter */}
-      <ul className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:thin]">
+      {/* 2 or 4 columns, never 3, so a 4-product rail never leaves a lone card on its own row */}
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
         {products.map((product) => (
-          <li key={product.id} className="w-[45%] shrink-0 snap-start sm:w-[30%] lg:w-[calc((100%-3rem)/4)]">
+          <li key={product.id}>
             <ProductCard product={product} locale={env.locale} />
           </li>
         ))}

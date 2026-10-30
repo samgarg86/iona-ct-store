@@ -49,6 +49,6 @@ export const homeBlocks: HomeBlock[] = [
     type: "productRail",
     title: "New arrivals",
     categorySlug: "new-arrivals",
-    limit: 8,
+    limit: 4,
   },
 ];
