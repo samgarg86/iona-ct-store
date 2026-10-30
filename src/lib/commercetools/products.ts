@@ -194,18 +194,20 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
   "use cache";
   cacheLife("minutes");
 
+  // commercetools' recommended PDP lookup: query projections by slug, which reads the catalog
+  // directly rather than the search index. The slug goes in as a variable, not into the predicate.
   const { body } = await apiRoot
-    .products()
-    .search()
-    .post({
-      body: {
-        query: { exact: { field: "slug", language: env.locale, value: slug } },
+    .productProjections()
+    .get({
+      queryArgs: {
+        where: `slug(${env.locale} = :slug)`,
+        "var.slug": slug,
         limit: 1,
-        productProjectionParameters: projectionParameters,
+        ...projectionParameters,
       },
     })
     .execute();
 
-  const projection = body.results[0]?.productProjection;
+  const projection = body.results[0];
   return projection ? toProduct(projection, env.locale) : undefined;
 }
