@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { HeroBlock } from "@/content/home";
 import { getProductBySlug } from "@/lib/commercetools/products";
 
-export async function Hero({ eyebrow, title, text, cta, productSlug }: HeroBlock) {
+export async function Hero({ eyebrow, title, text, tags, cta, productSlug }: HeroBlock) {
   const product = await getProductBySlug(productSlug);
   const image = product?.variants[0]?.images[0];
 
@@ -14,6 +14,15 @@ export async function Hero({ eyebrow, title, text, cta, productSlug }: HeroBlock
         {eyebrow && <p className="text-sm font-medium uppercase tracking-wider text-accent">{eyebrow}</p>}
         <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">{title}</h1>
         <p className="max-w-md text-lg text-muted text-pretty">{text}</p>
+        {tags && (
+          <ul className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <li key={tag} className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
+                {tag}
+              </li>
+            ))}
+          </ul>
+        )}
         <Link
           href={cta.href}
           className="mt-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"

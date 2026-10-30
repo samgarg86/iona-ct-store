@@ -7,6 +7,8 @@ export interface HeroBlock {
   eyebrow?: string;
   title: string;
   text: string;
+  /** Short labels shown as pills, e.g. the tech stack */
+  tags?: string[];
   cta: { label: string; href: string };
   /** Product whose image fills the hero */
   productSlug: string;
@@ -31,10 +33,11 @@ export type HomeBlock = HeroBlock | CategoryTilesBlock | ProductRailBlock;
 export const homeBlocks: HomeBlock[] = [
   {
     type: "hero",
-    eyebrow: "New season",
-    title: "Pieces made for slow living",
-    text: "Soft sofas, honest materials and table settings worth lingering over.",
-    cta: { label: "Shop new arrivals", href: "/products?category=new-arrivals" },
+    eyebrow: "IONA Commerce",
+    title: "A tiny Commercetools store",
+    text: "Built with Next.js. Live commercetools data, rendered on the server.",
+    tags: ["Next.js", "React", "TypeScript", "Commercetools", "Tailwind CSS"],
+    cta: { label: "Browse products", href: "/products" },
     productSlug: "nala-two-seater-sofa",
   },
   {
